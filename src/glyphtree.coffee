@@ -60,37 +60,44 @@ class GlyphTree
     $('body').append($style)
     
   getStyle: () ->
-    style = (typeName, type) =>
-      # Make the default state being the absence of a state class
-      stateSelector = (state) =>
-        if state == 'default' then '' else '.'+@_stateClass(state)
-      typeSelector = (t) =>
-        if t == 'default' then '' else '.'+@_typeClass(t)
+    cr = new ClassResolver(@options.classPrefix)
+    # Produce style rules for each type
+    typeStyle = (name, config) =>
+      # Make the default state being the absence of a state class.
+      sSel = (state) =>
+        if state == 'default' then '' else '.'+cr.state(state)
+      # Ensure fallback to default styling for unknown types.
+      tSel = (type) =>
+        if type == 'default' then '' else '.'+cr.type(type)
+      # Combine for convenience.
+      sel = (state, type) -> sSel(state)+tSel(type)  
       # Setup icons for each of the states. 
       # Any missing will have the default state icon.
-      ("""
-      .#{@idClass} ul li.#{@_nodeClass()}#{stateSelector(state)}#{typeSelector(typeName)}:before {
-        font-family: #{type.icon[state].font};
-        content: '#{type.icon[state].content}';
-      }
-      """ for state in ['default', 'leaf', 'expanded'] when type.icon[state]).join("\n")+
+      (for state in ['default', 'leaf', 'expanded'] when config.icon[state]
+        """
+        .#{@idClass} ul li.#{cr.node()}#{sel(state, name)}:before {
+          font-family: #{config.icon[state].font};
+          content: '#{config.icon[state].content}';
+        }
+        """).join("\n") +
       # Hide children except when expanded
       """
-      .#{@idClass} ul li.#{@_nodeClass()}#{stateSelector('default')}#{typeSelector(typeName)} > ul.#{@_treeClass()} {
+      .#{@idClass} ul li.#{cr.node()}#{sel('default',name)} > ul.#{cr.tree()} {
         display: none;
       }
-      .#{@idClass} ul li.#{@_nodeClass()}#{stateSelector('expanded')}#{typeSelector(typeName)} > ul.#{@_treeClass()} {
+      .#{@idClass} ul li.#{cr.node()}#{sel('expanded',name)} > ul.#{cr.tree()} {
         display: block;
       }
       """
+    # Basic style settings which apply to all nodes
     boilerplate = """
     .#{@idClass} ul {
       list-style-type: none;
     }
-    .#{@idClass} ul li.#{@_nodeClass()} {
+    .#{@idClass} ul li.#{cr.node()} {
       cursor: pointer;
     }
-    .#{@idClass} ul li.#{@_nodeClass()}:before {
+    .#{@idClass} ul li.#{cr.node()}:before {
       width: 1em;
       text-align: center;
       display: inline-block;
@@ -98,7 +105,7 @@ class GlyphTree
       speak: none;
     }
     """
-    boilerplate + "\n"+ (style(k,v) for k,v of @options.types).join("\n")
+    boilerplate + "\n"+ (typeStyle(k,v) for k,v of @options.types).join("\n")
       
   # Takes a structure something like:
   #
@@ -119,38 +126,56 @@ class GlyphTree
   #     ]
   #
   load: (structure) ->
-    makeElement = (node) =>
-      $li = $("<li/>")
-      $li.text(node.name)
-      $li.addClass(@_nodeClass())
-      $li.addClass(@_typeClass(node.type ? 'default'))
-      $li.attr("data-#{k}", v) for k, v of node.attributes
-      if (node.children ? []).length == 0
-        $li.addClass(@_stateClass('leaf'))
+    cr = new ClassResolver(@options.classPrefix)
+    @rootNodes = (new Node(root, cr) for root in structure)
+    console.log(@rootNodes)
+    $(@element).empty()
+    $(@element).append((new NodeContainer(@rootNodes, cr)).element())
+    this
+    
+  class Node
+    
+    constructor: (struct, classResolver) ->
+      @cr = classResolver
+      @id = struct.id
+      @name = struct.name
+      @type = struct.type
+      @attributes = struct.attributes
+      @children = if struct.children
+        (new Node(child, classResolver) for child in struct.children)
       else
-        expandedClass = @_stateClass('expanded')
+        []
+    
+    element: () =>
+      $li = $("<li/>")
+      $li.text(@name)
+      $li.addClass(@cr.node())
+      $li.addClass(@cr.type(@type ? 'default'))
+      if @children.length == 0
+        $li.addClass(@cr.state('leaf'))
+      else
+        expandedClass = @cr.state('expanded')
         $li.click (e) ->
           if this == e.target
             $(this).toggleClass(expandedClass)
-      if node.children
-        $li.append(makeElements(node.children))
+        $li.append((new NodeContainer(@children, @cr)).element())
       $li
-    
-    makeElements = (nodes) =>
-      $list = $("<ul/>")
-      $list.addClass(@_treeClass())
-      $list.append(makeElement(node)) for node in nodes
-      $list
-    
-    $(@element).empty()
-    $(@element).append(makeElements(structure))
-    this
-    
-  _nodeClass: () -> @options.classPrefix+"node"
-  _treeClass: () -> @options.classPrefix+"tree"
   
-  _typeClass: (typeName) ->
-    @options.classPrefix+'type-'+typeName
-    
-  _stateClass: (state) ->
-    @options.classPrefix+state
+  class NodeContainer
+
+    constructor: (@nodes, @cr) ->
+      
+    element: () =>
+      $list = $("<ul/>")
+      $list.addClass(@cr.tree())
+      $list.append(node.element() for node in @nodes)
+      $list
+  
+  # Handles resolution of DOM classes
+  class ClassResolver
+    constructor: (@prefix) ->
+      
+    node: () -> @prefix + "node"
+    tree: () -> @prefix + "tree"
+    type: (type) -> @prefix + 'type-' + type
+    state: (state) -> @prefix + state
