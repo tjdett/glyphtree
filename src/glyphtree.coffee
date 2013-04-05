@@ -6,8 +6,18 @@
 # Export methods for node.js testing or browser window
 root = exports ? this
 
+localWindow = window ? null
+$ = null
+
+# Node.js-only method for binding
+if exports?
+  root.create = (windowToInit) ->
+    localWindow = windowToInit
+    for methodName, method of root
+      localWindow[methodName] = method
+    
 defaults =
-  classPrefix: "filetree-"
+  classPrefix: "glyphtree-"
   types:
     default:
       icon:
@@ -37,16 +47,18 @@ defaults =
 root.glyphtree = (e) ->
   # Writing a cross-browser widget with DOM manipulation is hard, so
   # GlyphTree needs jQuery (or something like it)
+  $ = localWindow.jQuery ? localWindow.$
   if (typeof($) == 'undefined')
-    throw new Exception 'GlyphTree requires jQuery (or a compatible clone).'
+    throw new Error 'GlyphTree requires jQuery (or a compatible clone).'
   new GlyphTree(e)
 
 root.glyphtree.options = defaults
 
 class GlyphTree
-
+  
   constructor: (@element) ->
-    @options = root.glyphtree.options
+    # Creat options instance by cloning global settings
+    @options = $.extend({}, root.glyphtree.options)
     randomId = Math.floor(Math.random()*Math.pow(2,32)).toString(16)
     @idClass = @options.classPrefix+'id'+randomId
     $(@element).addClass(@idClass)
