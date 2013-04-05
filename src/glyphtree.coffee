@@ -8,7 +8,6 @@ root = exports ? this
 
 defaults =
   classPrefix: "filetree-"
-  typePrefix: "type-"
   types:
     default:
       icon:
@@ -64,23 +63,23 @@ class GlyphTree
     style = (typeName, type) =>
       # Make the default state being the absence of a state class
       stateSelector = (state) =>
-        if state == 'default' then '' else '.'+@stateClass(state)
+        if state == 'default' then '' else '.'+@_stateClass(state)
       typeSelector = (t) =>
-        if t == 'default' then '' else '.'+@typeClass(t)
+        if t == 'default' then '' else '.'+@_typeClass(t)
       # Setup icons for each of the states. 
       # Any missing will have the default state icon.
       ("""
-      .#{@idClass} ul li.#{@nodeClass()}#{stateSelector(state)}#{typeSelector(typeName)}:before {
+      .#{@idClass} ul li.#{@_nodeClass()}#{stateSelector(state)}#{typeSelector(typeName)}:before {
         font-family: #{type.icon[state].font};
         content: '#{type.icon[state].content}';
       }
       """ for state in ['default', 'leaf', 'expanded'] when type.icon[state]).join("\n")+
       # Hide children except when expanded
       """
-      .#{@idClass} ul li.#{@nodeClass()}#{stateSelector('default')}#{typeSelector(typeName)} > ul.#{@treeClass()} {
+      .#{@idClass} ul li.#{@_nodeClass()}#{stateSelector('default')}#{typeSelector(typeName)} > ul.#{@_treeClass()} {
         display: none;
       }
-      .#{@idClass} ul li.#{@nodeClass()}#{stateSelector('expanded')}#{typeSelector(typeName)} > ul.#{@treeClass()} {
+      .#{@idClass} ul li.#{@_nodeClass()}#{stateSelector('expanded')}#{typeSelector(typeName)} > ul.#{@_treeClass()} {
         display: block;
       }
       """
@@ -88,10 +87,10 @@ class GlyphTree
     .#{@idClass} ul {
       list-style-type: none;
     }
-    .#{@idClass} ul li.#{@nodeClass()} {
+    .#{@idClass} ul li.#{@_nodeClass()} {
       cursor: pointer;
     }
-    .#{@idClass} ul li.#{@nodeClass()}:before {
+    .#{@idClass} ul li.#{@_nodeClass()}:before {
       width: 1em;
       text-align: center;
       display: inline-block;
@@ -123,13 +122,13 @@ class GlyphTree
     makeElement = (node) =>
       $li = $("<li/>")
       $li.text(node.name)
-      $li.addClass(@nodeClass())
-      $li.addClass(@typeClass(node.type ? 'default'))
+      $li.addClass(@_nodeClass())
+      $li.addClass(@_typeClass(node.type ? 'default'))
       $li.attr("data-#{k}", v) for k, v of node.attributes
       if (node.children ? []).length == 0
-        $li.addClass(@stateClass('leaf'))
+        $li.addClass(@_stateClass('leaf'))
       else
-        expandedClass = @stateClass('expanded')
+        expandedClass = @_stateClass('expanded')
         $li.click (e) ->
           if this == e.target
             $(this).toggleClass(expandedClass)
@@ -139,19 +138,19 @@ class GlyphTree
     
     makeElements = (nodes) =>
       $list = $("<ul/>")
-      $list.addClass(@treeClass())
+      $list.addClass(@_treeClass())
       $list.append(makeElement(node)) for node in nodes
       $list
     
     $(@element).empty()
     $(@element).append(makeElements(structure))
     this
-  
-  nodeClass: () -> @options.classPrefix+"node"
-  treeClass: () -> @options.classPrefix+"tree"
-
-  typeClass: (typeName) ->
-    @options.classPrefix+@options.typePrefix+typeName
     
-  stateClass: (state) ->
+  _nodeClass: () -> @options.classPrefix+"node"
+  _treeClass: () -> @options.classPrefix+"tree"
+  
+  _typeClass: (typeName) ->
+    @options.classPrefix+'type-'+typeName
+    
+  _stateClass: (state) ->
     @options.classPrefix+state
