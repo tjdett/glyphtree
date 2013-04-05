@@ -13,15 +13,31 @@ module.exports = function(grunt) {
         }
       }
     },
+    docco: {
+      main: {
+        src: ['src/*.coffee'],
+        options: {
+          output: 'docs/'
+        }
+      }
+    },
+    regarde: {
+      js: {
+        files: '**/*.coffee',
+        tasks: ['default'],
+        spawn: true
+      }
+    },
     uglify: {
       options: {
-        banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n',
-        report: 'min'
+        banner: '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd")%> */\n',
+        report: 'min',
+        preserveComments: 'some'
       },
       build: {
         options: {
-          sourceMapIn: "build/<%= pkg.name %>.map",
-          sourceMap: "build/<%= pkg.name %>.min.map"
+          sourceMapIn: 'build/<%= pkg.name %>.map',
+          sourceMap: 'build/<%= pkg.name %>.min.map'
         },
         files: {
           'build/<%= pkg.name %>.min.js': 'build/<%= pkg.name %>.js'
@@ -30,9 +46,12 @@ module.exports = function(grunt) {
     }
   });
 
+  grunt.loadNpmTasks('grunt-docco');
+  grunt.loadNpmTasks('grunt-regarde');
   grunt.loadNpmTasks('grunt-contrib-coffee');
   grunt.loadNpmTasks('grunt-contrib-uglify');
 
-  grunt.registerTask('default', ['coffee', 'uglify']);
+  grunt.registerTask('default', ['coffee', 'uglify', 'docco']);
+  grunt.registerTask('watch', ['regarde']);
 
 };

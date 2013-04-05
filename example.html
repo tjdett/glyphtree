@@ -1,0 +1,38 @@
+<html>
+  <head>
+    <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.0.2/css/font-awesome.css" rel="stylesheet">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript" src="build/glyphtree.js"></script>
+    <script type="text/javascript">
+    $(function(){
+      var tree = window.glyphtree(document.getElementById("glyphtree-example"));
+      tree.load([
+        {
+          name: "root",
+          type: "folder",
+          attributes: {
+            foo: "bar"
+          },
+          children: [
+            {
+              name: "subfolder",
+              children: [
+                {
+                  name: "file.txt",
+                  type: "file"
+                }
+              ]
+            }
+          ]
+        }
+      ]);
+    });
+    </script>
+  </head>
+  <body>
+    <div id="glyphtree-example">
+      <p>Content which will be removed.</p>
+    </div>
+  </body>
+</html>

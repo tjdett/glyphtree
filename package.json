@@ -2,14 +2,16 @@
   "name": "glyphtree",
   "version": "0.0.1",
   "licenses": [
-     {
-       "type": "MIT",
-       "url": "http://opensource.org/licenses/MIT"
-     }
-   ],
+    {
+      "type": "MIT",
+      "url": "http://opensource.org/licenses/MIT"
+    }
+  ],
   "devDependencies": {
     "grunt": "~0.4.1",
+    "grunt-docco": "0.2.0",
     "grunt-contrib-coffee": "~0.6.4",
-    "grunt-contrib-uglify": "0.2.0"
+    "grunt-contrib-uglify": "0.2.0",
+    "grunt-regarde": "~0.1.1"
   }
 }
