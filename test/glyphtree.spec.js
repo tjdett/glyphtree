@@ -1,20 +1,72 @@
 /* :indentSize=2:tabSize=2:noTabs=true: */
 
 var domino = require('domino'),
-  coffeescript = require("coffee-script");
+  expect = require('chai').expect,
+  coffeescript = require("coffee-script"),
+  jqueryFactory = require('jquery');
+  glyphtreeFactory = require(__dirname+"/../src/glyphtree.coffee");
 
-// Use Chai for assertions
-require('chai').should();
+
+describe('.glyphtree', function() {
+
+  it('should allow global options to be set', function () {
+    var window = domino.createWindow('<body><div id="test"></div></body>'),
+      document = window.document,
+      $ = jqueryFactory.create(window),
+      glyphtree = glyphtreeFactory.create(window);
+    expect(glyphtree($('#test')).options.classPrefix).to.equal('glyphtree-');
+    glyphtree.options.classPrefix = 'foobar-';
+    expect(glyphtree($('#test')).options.classPrefix).to.equal('foobar-');
+  });
+
+});
 
 describe('GlyphTree', function() {
 
-  describe("#load()", function() {
+  describe('#options', function () {
 
-    it("should load and render a tree", function() {
+    it('should allow options to be changed', function() {
       var window = domino.createWindow('<body><div id="test"></div></body>'),
         document = window.document,
-        $ = loadJQuery(window),
-        glyphtree = loadGlyphTree(window);
+        $ = jqueryFactory.create(window),
+        glyphtree = glyphtreeFactory.create(window);
+      var tree = glyphtree($('#test'));
+      tree.options.classPrefix = 'foobar-';
+      tree.load([
+        {
+          name: "root",
+          attributes: {
+            foo: "bar"
+          },
+          children: [
+            {
+              name: "subfolder",
+              children: [
+                {
+                  name: "README"
+                },
+                {
+                  name: "file.txt"
+                }
+              ]
+            }
+          ]
+        }
+      ]);
+      // Prefix should change
+      expect($('.foobar-node')).to.have.length.above(0);
+      expect($('.glyphtree-node')).to.have.length(0);
+    });
+
+  });
+
+  describe("#load()", function() {
+
+    function createTestTree() {
+      var window = domino.createWindow('<body><div id="test"></div></body>'),
+        document = window.document,
+        $ = jqueryFactory.create(window),
+        glyphtree = glyphtreeFactory.create(window);
       var tree = glyphtree($('#test'));
       tree.load([
         {
@@ -37,36 +89,29 @@ describe('GlyphTree', function() {
           ]
         }
       ]);
-      // Three nodes (root, subfolder, README, file.txt)
-      $('.glyphtree-node').should.have.lengthOf(4);
-      // Three trees
-      $('.glyphtree-tree').should.have.lengthOf(3);
-      // Two leaf nodes
-      $('.glyphtree-leaf').should.have.lengthOf(2);
+      return $;
+    };
 
+    it("should load and render a tree", function() {
+      var $ = createTestTree();
+      // Four nodes (root, subfolder, README, file.txt)
+      expect($('.glyphtree-node')).to.have.length(4);
+      // Three trees
+      expect($('.glyphtree-tree')).to.have.length(3);
+      // Two leaf nodes
+      expect($('.glyphtree-leaf')).to.have.length(2);
+    });
+
+    it ("should bind click events", function() {
+      var $ = createTestTree();
       // Tree starts unexpanded
-      $('.glyphtree-expanded').should.have.lengthOf(0);
+      expect($('.glyphtree-expanded')).to.have.length(0);
       // Click a node
       $('#test > .glyphtree-tree > .glyphtree-node').click();
-      $('.glyphtree-expanded').should.have.lengthOf(1);
+      // The hierarchy should expand one level
+      expect($('.glyphtree-expanded')).to.have.length(1);
     });
 
   });
 
 });
-
-// ## Utility functions
-
-// Load jQuery in mock DOM window
-function loadJQuery(window) {
-  var jquery = require('jquery');
-  jquery.create(window);
-  return window.jQuery;
-}
-
-// Load GlyphTree in mock DOM window
-function loadGlyphTree(window) {
-  var glyphtree = require(__dirname+"/../src/glyphtree.coffee");
-  glyphtree.create(window);
-  return window.glyphtree;
-}
