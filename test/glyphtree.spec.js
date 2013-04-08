@@ -9,14 +9,18 @@ var domino = require('domino'),
 
 describe('.glyphtree', function() {
 
-  it('should allow global options to be set', function () {
-    var window = domino.createWindow('<body><div id="test"></div></body>'),
-      document = window.document,
-      $ = jqueryFactory.create(window),
-      glyphtree = glyphtreeFactory.create(window);
-    expect(glyphtree($('#test')).options.classPrefix).to.equal('glyphtree-');
-    glyphtree.options.classPrefix = 'foobar-';
-    expect(glyphtree($('#test')).options.classPrefix).to.equal('foobar-');
+  describe('#options', function() {
+
+    it('should allow global options to be set', function () {
+      var window = domino.createWindow('<body><div id="test"></div></body>'),
+        document = window.document,
+        $ = jqueryFactory.create(window),
+        glyphtree = glyphtreeFactory.create(window);
+      expect(glyphtree($('#test')).options.classPrefix).to.equal('glyphtree-');
+      glyphtree.options.classPrefix = 'foobar-';
+      expect(glyphtree($('#test')).options.classPrefix).to.equal('foobar-');
+    });
+
   });
 
 });
@@ -54,8 +58,8 @@ describe('GlyphTree', function() {
         }
       ]);
       // Prefix should change
-      expect($('.foobar-node')).to.have.length.above(0);
-      expect($('.glyphtree-node')).to.have.length(0);
+      expect($('.foobar-node').length).to.be.above(0);
+      expect($('.glyphtree-node').length).to.equal(0);
     });
 
   });
@@ -95,21 +99,21 @@ describe('GlyphTree', function() {
     it("should load and render a tree", function() {
       var $ = createTestTree();
       // Four nodes (root, subfolder, README, file.txt)
-      expect($('.glyphtree-node')).to.have.length(4);
+      expect($('.glyphtree-node').length).to.equal(4);
       // Three trees
-      expect($('.glyphtree-tree')).to.have.length(3);
+      expect($('.glyphtree-tree').length).to.equal(3);
       // Two leaf nodes
-      expect($('.glyphtree-leaf')).to.have.length(2);
+      expect($('.glyphtree-leaf').length).to.equal(2);
     });
 
     it ("should bind click events", function() {
       var $ = createTestTree();
       // Tree starts unexpanded
-      expect($('.glyphtree-expanded')).to.have.length(0);
+      expect($('.glyphtree-expanded').length).to.equal(0);
       // Click a node
       $('#test > .glyphtree-tree > .glyphtree-node').click();
       // The hierarchy should expand one level
-      expect($('.glyphtree-expanded')).to.have.length(1);
+      expect($('.glyphtree-expanded').length).to.equal(1);
     });
 
   });
