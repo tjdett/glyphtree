@@ -59,7 +59,7 @@ describe('GlyphTree', function() {
 
 // Load jQuery in mock DOM window
 function loadJQuery(window) {
-  var jquery = require('jquery-latest');
+  var jquery = require('jquery');
   jquery.create(window);
   return window.jQuery;
 }

@@ -8,7 +8,7 @@
     }
   ],
   "dependencies": {
-    "jquery-latest": "~1.9.0"
+    "jquery": "~1.8.3"
   },
   "devDependencies": {
     "chai": "~1.5.0",
@@ -19,7 +19,7 @@
     "grunt-contrib-coffee": "~0.6.4",
     "grunt-contrib-uglify": "0.2.0",
     "grunt-regarde": "~0.1.1",
-    "grunt-simple-mocha": "~0.3.2"
+    "grunt-simple-mocha": "git+https://github.com/yaymukund/grunt-simple-mocha.git#7d1cb9bfd8580fc5369bd82e288f683bb7ca0d46"
   },
   "scripts": {
     "test": "grunt test"
