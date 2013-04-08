@@ -20,5 +20,8 @@
     "grunt-contrib-uglify": "0.2.0",
     "grunt-regarde": "~0.1.1",
     "grunt-simple-mocha": "~0.3.2"
+  },
+  "scripts": {
+    "test": "grunt test"
   }
 }
