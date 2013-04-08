@@ -27,10 +27,20 @@
           ]
         }
       ]);
+      $('.btn:contains(Expand)').click(function() {
+        tree.expandAll();
+      });
+      $('.btn:contains(Collapse)').click(function() {
+        tree.collapseAll();
+      });
     });
     </script>
   </head>
   <body>
+    <div class="btn-group">
+      <button class="btn">Expand</button>
+      <button class="btn">Collapse</button>
+    </div>
     <div id="glyphtree-example">
       <p>Content which will be removed.</p>
     </div>

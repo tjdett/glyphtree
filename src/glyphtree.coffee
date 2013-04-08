@@ -5,6 +5,7 @@
 
 defaults = () ->
   classPrefix: "glyphtree-"
+  startExpanded: false
   types:
     default:
       icon:
@@ -157,6 +158,20 @@ glyphtree = (element, options) ->
     render: () ->
       $(@element).empty()
       $(@element).append(@rootNodes.element())
+      if @options.startExpanded
+        @expandAll()
+      this
+
+    expandAll: () ->
+      if !@rootNodes.empty()
+        @rootNodes.walkNodes (node) ->
+          node.expand()
+      this
+
+    collapseAll: () ->
+      if !@rootNodes.empty()
+        @rootNodes.walkNodes (node) ->
+          node.collapse()
       this
 
     class Node
@@ -172,6 +187,11 @@ glyphtree = (element, options) ->
         else
           []
         @children = new NodeContainer(children, classResolver)
+        # Decorate with show/hide node expansion methods.
+        expandedClass = @cr.state('expanded')
+        @isExpanded = () -> @element().hasClass(expandedClass)
+        @expand     = () -> @element().addClass(expandedClass)
+        @collapse   = () -> @element().removeClass(expandedClass)
 
       element: () ->
         @_element ||= @_buildElement()
@@ -184,12 +204,15 @@ glyphtree = (element, options) ->
         if @children.empty()
           $li.addClass(@cr.state('leaf'))
         else
-          expandedClass = @cr.state('expanded')
-          $li.click (e) ->
-            if this == e.target
-              $(this).toggleClass(expandedClass)
+          $li.click (e) =>
+            if $li.get(0) == e.target
+              if @isExpanded()
+                @collapse()
+              else
+                @expand()
           $li.append(@children.element())
         $li
+
 
     class NodeContainer
 
@@ -205,6 +228,13 @@ glyphtree = (element, options) ->
         $list.addClass(@cr.tree())
         $list.append(node.element() for node in @nodes)
         $list
+
+      walkNodes: (f) ->
+        for node in @nodes
+          f(node)
+          if !node.children.empty()
+            node.children.walkNodes(f)
+        undefined
 
     # Handles resolution of DOM classes
     class ClassResolver

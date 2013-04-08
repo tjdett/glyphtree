@@ -66,56 +66,91 @@ describe('GlyphTree', function() {
 
   describe("#load()", function() {
 
-    function createTestTree() {
-      var window = domino.createWindow('<body><div id="test"></div></body>'),
-        document = window.document,
-        $ = jqueryFactory.create(window),
-        glyphtree = glyphtreeFactory.create(window);
-      var tree = glyphtree($('#test'));
-      tree.load([
-        {
-          name: "root",
-          attributes: {
-            foo: "bar"
-          },
-          children: [
-            {
-              name: "subfolder",
-              children: [
-                {
-                  name: "README"
-                },
-                {
-                  name: "file.txt"
-                }
-              ]
-            }
-          ]
-        }
-      ]);
-      return $;
-    };
-
     it("should load and render a tree", function() {
-      var $ = createTestTree();
-      // Four nodes (root, subfolder, README, file.txt)
-      expect($('.glyphtree-node').length).to.equal(4);
-      // Three trees
-      expect($('.glyphtree-tree').length).to.equal(3);
-      // Two leaf nodes
-      expect($('.glyphtree-leaf').length).to.equal(2);
+      withTestTree(function(tree, $) {
+        // Four nodes (root, subfolder, README, file.txt)
+        expect($('.glyphtree-node').length).to.equal(4);
+        // Three trees
+        expect($('.glyphtree-tree').length).to.equal(3);
+        // Two leaf nodes
+        expect($('.glyphtree-leaf').length).to.equal(2);
+      });
     });
 
     it ("should bind click events", function() {
-      var $ = createTestTree();
-      // Tree starts unexpanded
-      expect($('.glyphtree-expanded').length).to.equal(0);
-      // Click a node
-      $('#test > .glyphtree-tree > .glyphtree-node').click();
-      // The hierarchy should expand one level
-      expect($('.glyphtree-expanded').length).to.equal(1);
+      withTestTree(function (tree, $) {
+        // Tree starts unexpanded
+        expect($('.glyphtree-expanded').length).to.equal(0);
+        // Click a node
+        $('#test > .glyphtree-tree > .glyphtree-node:not(.glyphtree-leaf)')
+          .click();
+        // The hierarchy should expand one level
+        expect($('.glyphtree-expanded').length).to.equal(1);
+      });
     });
 
   });
+
+  describe("#expandAll()", function() {
+
+    it ("should expand all trees", function() {
+      withTestTree(function (tree, $) {
+        // Tree starts unexpanded
+        expect($('.glyphtree-expanded').length).to.equal(0);
+        // Click a node
+        tree.expandAll();
+        // The hierarchy should expand all nodes
+        expect($('.glyphtree-expanded').length).to.equal(4);
+      });
+    });
+
+  });
+
+  describe("#collapseAll()", function() {
+
+    it ("should collapse all trees", function() {
+      withTestTree(function (tree, $) {
+        tree.options.startExpanded = true
+        tree.render()
+        // Tree starts expanded
+        expect($('.glyphtree-expanded').length).to.equal(4);
+        // Click a node
+        tree.collapseAll();
+        // The hierarchy should expand all nodes
+        expect($('.glyphtree-expanded').length).to.equal(0);
+      });
+    });
+
+  });
+
+  function withTestTree(jqueryTestFunc) {
+    var window = domino.createWindow('<body><div id="test"></div></body>'),
+      document = window.document,
+      $ = jqueryFactory.create(window),
+      glyphtree = glyphtreeFactory.create(window);
+    var tree = glyphtree($('#test'));
+    tree.load([
+      {
+        name: "root",
+        attributes: {
+          foo: "bar"
+        },
+        children: [
+          {
+            name: "subfolder",
+            children: [
+              {
+                name: "README"
+              },
+              {
+                name: "file.txt"
+              }
+            ]
+          }
+        ]
+      }
+    ]);
+    jqueryTestFunc(tree, $);
+  };
 
 });
