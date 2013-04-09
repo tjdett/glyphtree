@@ -170,6 +170,26 @@ glyphtree = (element, options) ->
       @walk (node) ->
         node.collapse()
 
+    find: (arg) ->
+      node = null
+      switch typeof(arg)
+        # When providing functions, a truthy result means we have a match
+        when 'function'
+          @walk (n) ->
+            if arg(n)
+              node = n
+              return false # Exit early
+        # Otherwise assume the argument is an ID
+        else
+          @walk (n) ->
+            if n.id == arg
+              node = n
+              return false # Exit early
+      node
+
+    # Walk all nodes in the tree.
+    #
+    # Callback should return false to halt early.
     walk: (f) ->
       if !@rootNodes.empty()
         @rootNodes.walkNodes f
@@ -261,9 +281,14 @@ glyphtree = (element, options) ->
         $list.append(node.element() for node in @nodes)
         $list
 
+      # Walk all nodes in the tree.
+      #
+      # Callback should return false to halt early.
       walkNodes: (f) ->
         for node in @nodes
-          f(node)
+          result = f(node)
+          if result is false
+            break
           if !node.children.empty()
             node.children.walkNodes(f)
         undefined

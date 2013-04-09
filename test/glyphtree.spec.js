@@ -34,6 +34,32 @@ describe('.glyphtree', function() {
 
 describe('GlyphTree', function() {
 
+  var testTreeStructure = [
+    {
+      id: '25018945-704e-40d6-98c1-a30729277663',
+      name: "root",
+      attributes: {
+        foo: "bar"
+      },
+      children: [
+        {
+          id: '05089265-5f13-4fc8-a728-7a987c0c096e',
+          name: "subfolder",
+          children: [
+            {
+              id: '888c3513-9ab0-47e8-ab69-5b11effb1f6a',
+              name: "README"
+            },
+            {
+              // Intentionally no ID field, which should be fine
+              name: "file.txt"
+            }
+          ]
+        }
+      ]
+    }
+  ];
+
   describe('#options', function () {
 
     it('should allow options to be changed', function(done) {
@@ -45,27 +71,7 @@ describe('GlyphTree', function() {
             glyphtree = glyphtreeFactory.create(window);
           var tree = glyphtree($('#test'));
           tree.options.classPrefix = 'foobar-';
-          tree.load([
-            {
-              name: "root",
-              attributes: {
-                foo: "bar"
-              },
-              children: [
-                {
-                  name: "subfolder",
-                  children: [
-                    {
-                      name: "README"
-                    },
-                    {
-                      name: "file.txt"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]);
+          tree.load(testTreeStructure);
           // Prefix should change
           expect($('.foobar-node').length).to.be.above(0);
           expect($('.glyphtree-node').length).to.equal(0);
@@ -76,9 +82,9 @@ describe('GlyphTree', function() {
 
   });
 
-  describe("#load()", function() {
+  describe('#load()', function() {
 
-    it("should load and render a tree", function(done) {
+    it('should load and render a tree', function(done) {
       withTestTree(function(tree, $) {
         // Four nodes (root, subfolder, README, file.txt)
         expect($('.glyphtree-node').length).to.equal(4);
@@ -91,6 +97,48 @@ describe('GlyphTree', function() {
       }, done);
     });
 
+  });
+
+  describe('#find()', function () {
+
+    it('should return the node with the given ID', function(done) {
+      withTestTree(function(tree, $) {
+        var node;
+        node = tree.find('888c3513-9ab0-47e8-ab69-5b11effb1f6a');
+        expect(node.name).to.equal('README');
+        expect(node.isLeaf()).to.be.true;
+        node = tree.find('25018945-704e-40d6-98c1-a30729277663');
+        expect(node.name).to.equal('root');
+        expect(node.isLeaf()).to.be.false;
+      }, done);
+    });
+
+    it('should return null if no node found', function(done) {
+      withTestTree(function(tree, $) {
+        var node;
+        node = tree.find('foobar');
+        expect(node).to.be.null;
+        node = tree.find(null);
+        expect(node).to.be.null;
+      }, done);
+    });
+
+    it('should work with a matching function', function(done) {
+      withTestTree(function(tree, $) {
+        var node = tree.find(function(n) {
+          return n.id == '25018945-704e-40d6-98c1-a30729277663';
+        });
+        expect(node.name).to.equal('root');
+      }, done);
+    });
+
+    it('should only look as far as the first match', function(done) {
+      withTestTree(function(tree, $) {
+        var i = 0,
+          node = tree.find(function(n) { i++; return true; });
+        expect(i).to.equal(1);
+      }, done);
+    });
   });
 
   describe("default user events", function() {
@@ -173,27 +221,7 @@ describe('GlyphTree', function() {
           $ = jqueryFactory.create(window),
           glyphtree = glyphtreeFactory.create(window);
         var tree = glyphtree($('#test'));
-        tree.load([
-          {
-            name: "root",
-            attributes: {
-              foo: "bar"
-            },
-            children: [
-              {
-                name: "subfolder",
-                children: [
-                  {
-                    name: "README"
-                  },
-                  {
-                    name: "file.txt"
-                  }
-                ]
-              }
-            ]
-          }
-        ]);
+        tree.load(testTreeStructure);
         jqueryTestFunc(tree, $);
         callback();
       }
