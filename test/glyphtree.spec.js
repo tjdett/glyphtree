@@ -93,13 +93,12 @@ describe('GlyphTree', function() {
 
   });
 
-  describe("user events", function() {
+  describe("default user events", function() {
     function doExpansionTest(toggleAction, callback) {
       withTestTree(function (tree, $) {
         var $e =
           $([ '#test', '.glyphtree-tree',
-              '.glyphtree-node:not(.glyphtree-leaf)',
-              '.glyphtree-node-label'
+              '.glyphtree-node:not(.glyphtree-leaf)'
             ].join(' > ')).first()
         // Tree starts unexpanded
         expect($('.glyphtree-expanded').length).to.equal(0);
@@ -116,20 +115,6 @@ describe('GlyphTree', function() {
 
     it ("should toggle expansion on click", function(done) {
       doExpansionTest(function($e) { $e.click() }, done);
-    });
-
-    it ("should toggle expansion on enter keydown", function(done) {
-      // Press enter
-      doExpansionTest(function($e, $) {
-        $e.trigger($.Event("keydown", { keyCode: 0x0d }));
-      }, done);
-    });
-
-    it ("should toggle expansion on space keydown", function(done) {
-      // Press space
-      doExpansionTest(function($e, $) {
-        $e.trigger($.Event("keydown", { keyCode: 0x20 }));
-      }, done);
     });
 
   });

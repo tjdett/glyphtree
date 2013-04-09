@@ -206,7 +206,6 @@ glyphtree = (element, options) ->
           .addClass(@cr.type(@type ? 'default'))
         $label = $('<span/>')
           .addClass(@cr.node('label'))
-          .attr('tabIndex', 1000)
           .text(@name)
         $li.append($label)
         if @isLeaf()
@@ -223,18 +222,11 @@ glyphtree = (element, options) ->
         else
           node.expand()
 
-      ifEnterOrSpace = (f) ->
-        (event, node) ->
-          switch event.keyCode
-            when 0x0d, 0x20
-              f(event, node)
-
       events:
         icon:
           click: [ toggleExpansion ]
         label:
           click: [ toggleExpansion ]
-          keydown: [ ifEnterOrSpace(toggleExpansion) ]
 
       _attachEvents: ($element,  eventMapKey) ->
         watchedEvents = """
