@@ -68,19 +68,22 @@ glyphtree = (element, options) ->
   class GlyphTree
 
     constructor: (@element, defaults) ->
-      # Creat options instance by cloning global settings
+      # Create options instance by cloning global settings
       @options = $.extend({}, defaults)
+      # Use random ID 32-bit number to identify this tree
       randomId = Math.floor(Math.random()*Math.pow(2,32)).toString(16)
+      # Add ID class so styles can address this tree only
       @idClass = @options.classPrefix+'id'+randomId
       $(@element).addClass(@idClass)
-
-      this.setupStyle()
+      # Add the stylesheet to the dom
+      @_styleElement = this.setupStyle()
 
     setupStyle: () ->
       $style = $('<style/>')
       $style.attr('type', 'text/css')
       $style.text(this.getStyle())
       $('body').append($style)
+      $style
 
     getStyle: () ->
       cr = new ClassResolver(@options.classPrefix)
@@ -154,6 +157,16 @@ glyphtree = (element, options) ->
       @render()
       this
 
+    add: (structure, parentId) ->
+      cr = new ClassResolver(@options.classPrefix)
+      if parentId?
+        @find(parentId).addChild(new Node(structure, cr))
+      else
+        @rootNodes ||= new NodeContainer()
+        @rootNodes.add(new Node(structure, cr))
+      @render()
+      this
+
     # Render the container
     render: () ->
       $(@element).empty()
@@ -170,26 +183,21 @@ glyphtree = (element, options) ->
       @walk (node) ->
         node.collapse()
 
-    find: (arg) ->
-      node = null
-      switch typeof(arg)
-        # When providing functions, a truthy result means we have a match
-        when 'function'
-          @walk (n) ->
-            if arg(n)
-              node = n
-              return false # Exit early
-        # Otherwise assume the argument is an ID
-        else
-          @walk (n) ->
-            if n.id == arg
-              node = n
-              return false # Exit early
-      node
+    # Find node by ID
+    find: (id) ->
+      for n in @nodes()
+        if n.id == id
+          return n
+      null
+
+    # Get array of nodes in depth-first order.
+    nodes: () ->
+      nodes = []
+      @walk (n) ->
+        nodes.push(n)
+      nodes
 
     # Walk all nodes in the tree.
-    #
-    # Callback should return false to halt early.
     walk: (f) ->
       if !@rootNodes.empty()
         @rootNodes.walkNodes f
@@ -213,6 +221,12 @@ glyphtree = (element, options) ->
         @isExpanded = () -> @element().hasClass(expandedClass)
         @expand     = () -> @element().addClass(expandedClass)
         @collapse   = () -> @element().removeClass(expandedClass)
+
+      addChild: (node) ->
+        wasLeaf = @isLeaf()
+        @children.add(node)
+        if wasLeaf
+          @element().append(@children.element())
 
       element: () ->
         @_element ||= @_buildElement()
@@ -272,6 +286,10 @@ glyphtree = (element, options) ->
 
       empty: () -> @nodes.length == 0
 
+      add: (node) ->
+        @nodes.push(node)
+        @_rebuildElement()
+
       element: () ->
         @_element ||= @_buildElement()
 
@@ -281,14 +299,20 @@ glyphtree = (element, options) ->
         $list.append(node.element() for node in @nodes)
         $list
 
+      _rebuildElement: () ->
+        if @_element?
+          for node in @nodes
+            node.element().detach()
+          @_element.append(node.element() for node in @nodes)
+        else
+          @element()
+
       # Walk all nodes in the tree.
       #
       # Callback should return false to halt early.
       walkNodes: (f) ->
         for node in @nodes
           result = f(node)
-          if result is false
-            break
           if !node.children.empty()
             node.children.walkNodes(f)
         undefined

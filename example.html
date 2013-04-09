@@ -5,8 +5,9 @@
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script type="text/javascript" src="build/glyphtree.js"></script>
     <script type="text/javascript">
+    var tree;
     $(function(){
-      var tree = window.glyphtree(document.getElementById("glyphtree-example"));
+      tree = window.glyphtree(document.getElementById("glyphtree-example"));
       tree.load([
         {
           name: "root",
