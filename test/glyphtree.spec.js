@@ -142,6 +142,20 @@ describe('GlyphTree', function() {
 
   });
 
+  describe('#remove()', function() {
+    it('should remove nodes designated by ID', function(done) {
+      withTestTree(testTreeStructure, function(tree, $) {
+        var nodeName = 'README'
+        expect($('.glyphtree-node > .glyphtree-node-label:contains('
+            +nodeName+')').length).to.equal(1);
+        tree.remove('888c3513-9ab0-47e8-ab69-5b11effb1f6a');
+        expect($('.glyphtree-node > .glyphtree-node-label:contains('
+            +nodeName+')').length).to.equal(0);
+      }, done);
+    });
+  });
+
+
   describe('#find()', function () {
 
     it('should return the node with the given ID', function(done) {
@@ -222,9 +236,9 @@ describe('GlyphTree', function() {
   describe("#collapseAll()", function() {
 
     it ("should collapse all trees", function(done) {
-      withTestTree(testTreeStructure, function (tree, $) {
+      withTestTree({}, function (tree, $) {
         tree.options.startExpanded = true
-        tree.render()
+        tree.load(testTreeStructure)
         // Tree starts expanded
         expect($('.glyphtree-expanded').length).to.equal(4);
         // Click a node

@@ -153,8 +153,11 @@ glyphtree = (element, options) ->
     #
     load: (structure) ->
       cr = new ClassResolver(@options.classPrefix)
-      @rootNodes = new NodeContainer(new Node(root, cr) for root in structure, cr)
-      @render()
+      @_setRootContainer(
+        new NodeContainer(new Node(root, cr) for root in structure, cr)
+      )
+      if @options.startExpanded
+        @expandAll()
       this
 
     add: (structure, parentId) ->
@@ -162,17 +165,15 @@ glyphtree = (element, options) ->
       if parentId?
         @find(parentId).addChild(new Node(structure, cr))
       else
-        @rootNodes ||= new NodeContainer()
+        if !(@rootNodes?)
+          @_setRootContainer(new NodeContainer())
         @rootNodes.add(new Node(structure, cr))
-      @render()
       this
 
-    # Render the container
-    render: () ->
-      $(@element).empty()
-      $(@element).append(@rootNodes.element())
-      if @options.startExpanded
-        @expandAll()
+    remove: (nodeId) ->
+      node = @find(nodeId)
+      if node?
+        node.remove()
       this
 
     expandAll: () ->
@@ -203,6 +204,12 @@ glyphtree = (element, options) ->
         @rootNodes.walkNodes f
       this
 
+    _setRootContainer: (container) ->
+      @rootNodes = container
+      $(@element).empty()
+      $(@element).append(container.element())
+      this
+
     class Node
 
       constructor: (struct, classResolver) ->
@@ -227,6 +234,9 @@ glyphtree = (element, options) ->
         @children.add(node)
         if wasLeaf
           @element().append(@children.element())
+
+      remove: () ->
+        @container.remove(this)
 
       element: () ->
         @_element ||= @_buildElement()
@@ -283,12 +293,21 @@ glyphtree = (element, options) ->
     class NodeContainer
 
       constructor: (@nodes, @cr) ->
+        for node in @nodes
+          node.container = this
 
       empty: () -> @nodes.length == 0
 
       add: (node) ->
         @nodes.push(node)
         @_rebuildElement()
+
+      remove: (node) ->
+        if node in @nodes
+          node.element().remove()
+          @nodes = @nodes.filter (n) -> n isnt node
+        else
+          throw new Error('Node not in this container')
 
       element: () ->
         @_element ||= @_buildElement()
