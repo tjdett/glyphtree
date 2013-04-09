@@ -163,15 +163,16 @@ glyphtree = (element, options) ->
       this
 
     expandAll: () ->
-      if !@rootNodes.empty()
-        @rootNodes.walkNodes (node) ->
-          node.expand()
-      this
+      @walk (node) ->
+        node.expand()
 
     collapseAll: () ->
+      @walk (node) ->
+        node.collapse()
+
+    walk: (f) ->
       if !@rootNodes.empty()
-        @rootNodes.walkNodes (node) ->
-          node.collapse()
+        @rootNodes.walkNodes f
       this
 
     class Node
@@ -196,23 +197,62 @@ glyphtree = (element, options) ->
       element: () ->
         @_element ||= @_buildElement()
 
+      isLeaf: () ->
+        @children.empty()
+
       _buildElement: () ->
-        $li = $("<li/>")
-        $li.text(@name)
-        $li.addClass(@cr.node())
-        $li.addClass(@cr.type(@type ? 'default'))
-        if @children.empty()
+        $li = $('<li/>')
+          .addClass(@cr.node())
+          .addClass(@cr.type(@type ? 'default'))
+        $label = $('<span/>')
+          .addClass(@cr.node('label'))
+          .attr('tabIndex', 1000)
+          .text(@name)
+        $li.append($label)
+        if @isLeaf()
           $li.addClass(@cr.state('leaf'))
         else
-          $li.click (e) =>
-            if $li.get(0) == e.target
-              if @isExpanded()
-                @collapse()
-              else
-                @expand()
           $li.append(@children.element())
+        @_attachEvents($li, 'icon')
+        @_attachEvents($label, 'label')
         $li
 
+      toggleExpansion = (event, node) ->
+        if node.isExpanded()
+          node.collapse()
+        else
+          node.expand()
+
+      ifEnterOrSpace = (f) ->
+        (event, node) ->
+          switch event.keyCode
+            when 0x0d, 0x20
+              f(event, node)
+
+      events:
+        icon:
+          click: [ toggleExpansion ]
+        label:
+          click: [ toggleExpansion ]
+          keydown: [ ifEnterOrSpace(toggleExpansion) ]
+
+      _attachEvents: ($element,  eventMapKey) ->
+        watchedEvents = """
+          click
+          keydown
+          keypress
+          keyup
+          mouseover
+          mouseout
+        """.replace(/\s+/gm, ' ').trim()
+        # Register a generic event handler pointing back to the events map
+        $element.on watchedEvents, (e) =>
+          if @events[eventMapKey][e.type]?
+            # Prevent bubbling
+            if e.currentTarget == e.target
+              for handler in @events[eventMapKey][e.type]
+                # Call handler with (original event, node)
+                handler(e, this)
 
     class NodeContainer
 
@@ -240,7 +280,12 @@ glyphtree = (element, options) ->
     class ClassResolver
       constructor: (@prefix) ->
 
-      node: () -> @prefix + "node"
+      node: (attr) ->
+        if attr
+          @node() + "-" + attr
+        else
+          @prefix + "node"
+
       tree: () -> @prefix + "tree"
       type: (type) -> @prefix + 'type-' + type
       state: (state) -> @prefix + state

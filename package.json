@@ -13,13 +13,13 @@
   "devDependencies": {
     "chai": "~1.5.0",
     "coffee-script": "~1.6.2",
-    "domino": "~1.0.9",
     "grunt": "~0.4.1",
     "grunt-docco": "0.2.0",
     "grunt-contrib-coffee": "~0.6.4",
     "grunt-contrib-uglify": "0.2.0",
     "grunt-regarde": "~0.1.1",
-    "grunt-simple-mocha": "git+https://github.com/yaymukund/grunt-simple-mocha.git#7d1cb9bfd8580fc5369bd82e288f683bb7ca0d46"
+    "grunt-simple-mocha": "git+https://github.com/yaymukund/grunt-simple-mocha.git#7d1cb9bfd8580fc5369bd82e288f683bb7ca0d46",
+    "jsdom": "~0.5.6"
   },
   "scripts": {
     "test": "grunt test"
