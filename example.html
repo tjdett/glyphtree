@@ -4,46 +4,220 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.0.2/css/font-awesome.css" rel="stylesheet">
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script type="text/javascript" src="build/glyphtree.js"></script>
-    <script type="text/javascript">
-    var tree;
-    $(function(){
-      tree = window.glyphtree(document.getElementById("glyphtree-example"));
-      tree.load([
-        {
-          name: "root",
-          type: "folder",
-          attributes: {
-            foo: "bar"
-          },
-          children: [
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div id="default-example" class="span3">
+          <div class="btn-group pull-right">
+            <button class="btn btn-mini">Expand</button>
+            <button class="btn btn-mini">Collapse</button>
+          </div>
+          <div id="glyphtree-example-1">
+            <p>Content which will be removed.</p>
+          </div>
+        </div>
+        <script type="text/javascript">
+          var defaultTree;
+          $(function(){
+            defaultTree = window.glyphtree(
+              document.getElementById("glyphtree-example-1"));
+            defaultTree.load([
+              {
+                name: "root",
+                attributes: {
+                  exampleAttr: "foobar"
+                },
+                children: [
+                  {
+                    name: "subfolder",
+                    children: [
+                      {
+                        name: "file.txt",
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]);
+            $('#default-example .btn:contains(Expand)').click(function() {
+              defaultTree.expandAll();
+            });
+            $('#default-example .btn:contains(Collapse)').click(function() {
+              defaultTree.collapseAll();
+            });
+          });
+        </script>
+        <div id="custom-type-example" class="offset1 span3">
+          <div class="btn-group pull-right">
+            <button class="btn btn-mini">Expand</button>
+            <button class="btn btn-mini">Collapse</button>
+          </div>
+          <div id="glyphtree-example-2">
+            <p>Content which will be removed.</p>
+          </div>
+        </div>
+        <script type="text/javascript">
+        var customTypeTree;
+        $(function(){
+          customTypeTree = window.glyphtree(
+            document.getElementById("glyphtree-example-2"),
             {
-              name: "subfolder",
+              startExpanded: true,
+              types: {
+                folder: {
+                  icon: {
+                    "default": {
+                      content: "\uf07b",
+                      font: "FontAwesome"
+                    },
+                    expanded: {
+                      content: "\uf07c",
+                      font: "FontAwesome"
+                    }
+                  }
+                },
+                file: {
+                  icon: {
+                    leaf: {
+                      content: "\uf016",
+                      font: "FontAwesome"
+                    }
+                  }
+                }
+              }
+            });
+          customTypeTree.load([
+            {
+              name: "root",
+              type: "folder",
+              attributes: {
+                exampleAttr: "foobar"
+              },
               children: [
                 {
-                  name: "file.txt",
-                  type: "file"
+                  name: "subfolder",
+                  type: "folder",
+                  children: [
+                    {
+                      name: "file.txt",
+                      type: "file"
+                    }
+                  ]
                 }
               ]
             }
-          ]
-        }
-      ]);
-      $('.btn:contains(Expand)').click(function() {
-        tree.expandAll();
-      });
-      $('.btn:contains(Collapse)').click(function() {
-        tree.collapseAll();
-      });
-    });
-    </script>
-  </head>
-  <body>
-    <div class="btn-group">
-      <button class="btn">Expand</button>
-      <button class="btn">Collapse</button>
-    </div>
-    <div id="glyphtree-example">
-      <p>Content which will be removed.</p>
+          ]);
+          $('#custom-type-example .btn:contains(Expand)').click(function() {
+            customTypeTree.expandAll();
+          });
+          $('#custom-type-example .btn:contains(Collapse)').click(function() {
+            customTypeTree.collapseAll();
+          });
+        });
+        </script>
+        <div id="type-resolve-example" class="offset1 span3">
+          <div class="btn-group pull-right">
+            <button class="btn btn-mini">Expand</button>
+            <button class="btn btn-mini">Collapse</button>
+          </div>
+          <div id="glyphtree-example-3">
+            <p>Content which will be removed.</p>
+          </div>
+        </div>
+        <script type="text/javascript">
+        var typeResolverTree;
+        $(function(){
+          typeResolverTree = window.glyphtree(
+            document.getElementById("glyphtree-example-3"),
+            {
+              startExpanded: true,
+              typeResolver: function(struct) {
+                if (struct.children && struct.children.length > 0) {
+                  return 'folder';
+                }
+                if (struct['attributes'] && struct['attributes']['mime']) {
+                  var mime = struct['attributes']['mime'];
+                  if (mime.match(/^image/)) {
+                    return 'image';
+                  } else if (mime.match(/^text/)){
+                    return 'text';
+                  }
+                }
+                return 'file';
+              },
+              types: {
+                folder: {
+                  icon: {
+                    "default": {
+                      content: "\uf07b",
+                      font: "FontAwesome"
+                    },
+                    expanded: {
+                      content: "\uf07c",
+                      font: "FontAwesome"
+                    }
+                  }
+                },
+                file: {
+                  icon: {
+                    leaf: {
+                      content: "\uf016",
+                      font: "FontAwesome"
+                    }
+                  }
+                },
+                image: {
+                  icon: {
+                    leaf: {
+                      content: "\uf03e",
+                      font: "FontAwesome"
+                    }
+                  }
+                },
+                text: {
+                  icon: {
+                    leaf: {
+                      content: "\uf0f6",
+                      font: "FontAwesome"
+                    }
+                  }
+                }
+              }
+            });
+          typeResolverTree.load([
+            {
+              name: "root",
+              children: [
+                {
+                  name: "subfolder",
+                  children: [
+                    {
+                      name: "README",
+                      attributes: { mime: 'text/plain' }
+                    },
+                    {
+                      name: "myImage.png",
+                      attributes: { mime: 'image/png' }
+                    },
+                    {
+                      name: "foobar.zip",
+                      attributes: { mime: 'application/zip' }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]);
+          $('#type-resolve-example .btn:contains(Expand)').click(function() {
+            typeResolverTree.expandAll();
+          });
+          $('#type-resolve-example .btn:contains(Collapse)').click(function(){
+            typeResolverTree.collapseAll();
+          });
+        });
+        </script>
+      </div>
     </div>
   </body>
 </html>

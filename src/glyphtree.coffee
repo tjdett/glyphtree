@@ -3,9 +3,31 @@
 #     MIT Licence - see COPYING for details.
 ###
 
+# # GlyphTree.js
+#
+# GlyphTree provides a light-weight visual tree for managing hierarchical
+# data without requiring the traditional boat-load of image & CSS resources.
+#
+# It does this by:
+#
+#  * only using font glyphs (single character strings + fonts) for icons
+#  * injecting its own generated stylesheets into the document
+#
+# It is built with Twitter Bootstrap in mind, but should work with almost any
+# sensible stylesheet.
+
+# ## Defaults
+#
+# GlyphTree allows you to be fairly flexibile about CSS it generates, and how
+# it shows content in the DOM.
+#
+# You can:
 defaults = () ->
+  # * define the prefix used for all classes;
   classPrefix: "glyphtree-"
+  # * create the tree already expanded;
   startExpanded: false
+  # * specify custom types for nodes, and their styling;
   types:
     default:
       icon:
@@ -18,64 +40,47 @@ defaults = () ->
         expanded:
           content: "\u25bc"
           font: "inherit"
-    folder:
-      icon:
-        default:
-          content: "\uf07b"
-          font: "FontAwesome"
-        expanded:
-          content: "\uf07c"
-          font: "FontAwesome"
-    file:
-      icon:
-        leaf:
-          content: "\uf016"
-          font: "FontAwesome"
+  # * specify your own function to determine what type a node is, allowing you
+  #   to determine types client-side.
+  typeResolver: (struct) ->
+    struct.type
 
-# Create new GlyphTree function bound to a particular window
-bindToWindow = (window) ->
-  options = defaults()
-  # Bind function to the window context
-  window.glyphtree = (element) ->
-    glyphtree.call(window, element, options)
-  # Expose options so they can be changed
-  window.glyphtree.options = options
-  # Return bound function
-  window.glyphtree
-
-# Node.js-only method for binding
-if exports?
-  exports.create = (windowToInit) ->
-    bindToWindow(windowToInit)
-else
-  # Bind to the window in the browser environment
-  bindToWindow(this)
-
+# ## Producing a new GlyphTree
+#
+# To create a new GlyphTree, you can do something like this:
+#
+#     var element = document.getElementById('test'),
+#         options = { classPrefix: 'myownglyphtreeprefix-' };
+#     glyphtree(element, options);
+#
 glyphtree = (element, options) ->
-  # Set up the Environment
-  # ----------------------
+  # ## Environment
   #
   # Writing a cross-browser widget with DOM manipulation is hard, so
-  # GlyphTree needs jQuery (or something like it)
+  # GlyphTree needs jQuery (or something like it).
   $ = this.jQuery ? this.$
   if (typeof($) == 'undefined')
     throw new Error 'GlyphTree requires jQuery (or a compatible clone).'
 
-  # Define Classes
-  # --------------
+  # ## Classes
   #
   # We define our classes in this context so they get access to `$`.
+
+  # ### GlyphTree
+  #
+  # The main class for tree interactions. It interprets the provided options,
+  # maintains the tree style, and provides access to tree nodes.
   class GlyphTree
 
-    constructor: (@element, defaults) ->
-      # Create options instance by cloning global settings
-      @options = $.extend({}, defaults)
-      # Use random ID 32-bit number to identify this tree
+    # The contructor sets up the tree and prepares the DOM to accept new
+    # nodes. It:
+    constructor: (@element, @_options) ->
+      # * creates a random ID 32-bit number to identify this tree
       randomId = Math.floor(Math.random()*Math.pow(2,32)).toString(16)
-      # Add ID class so styles can address this tree only
-      @idClass = @options.classPrefix+'id'+randomId
+      # * adds an ID class so styles can address this tree only
+      @idClass = @_options.classPrefix+'id'+randomId
       $(@element).addClass(@idClass)
-      # Add the stylesheet to the dom
+      # * adds the generated stylesheet to the DOM
       @_styleElement = this.setupStyle()
 
     setupStyle: () ->
@@ -86,7 +91,7 @@ glyphtree = (element, options) ->
       $style
 
     getStyle: () ->
-      cr = new ClassResolver(@options.classPrefix)
+      cr = new ClassResolver(@_options.classPrefix)
       # Produce style rules for each type
       typeStyle = (name, config) =>
         # Make the default state being the absence of a state class.
@@ -131,12 +136,13 @@ glyphtree = (element, options) ->
         speak: none;
       }
       """
-      boilerplate + "\n"+ (typeStyle(k,v) for k,v of @options.types).join("\n")
+      boilerplate + "\n"+ (typeStyle(k,v) for k,v of @_options.types).join("\n")
 
     # Takes a structure something like:
     #
     #     [
     #       {
+    #         id: '25018945-704e-40d6-98c1-a30729277663',
     #         name: "root",
     #         type: "folder",
     #         attributes: {
@@ -151,23 +157,45 @@ glyphtree = (element, options) ->
     #       }
     #     ]
     #
+    #  IDs, attributes and type are optional.
     load: (structure) ->
-      cr = new ClassResolver(@options.classPrefix)
+      cr = new ClassResolver(@_options.classPrefix)
+      tr = @_options.typeResolver
       @_setRootContainer(
-        new NodeContainer(new Node(root, cr) for root in structure, cr)
+        new NodeContainer(new Node(root, cr, tr) for root in structure, cr)
       )
-      if @options.startExpanded
+      if @_options.startExpanded
         @expandAll()
       this
 
+    # Takes a plain object structure for a node, like:
+    #
+    #     {
+    #       id: '25018945-704e-40d6-98c1-a30729277663',
+    #       name: 'root',
+    #       attributes: {
+    #         foo: 'bar'
+    #       }
+    #     }
+    #
     add: (structure, parentId) ->
-      cr = new ClassResolver(@options.classPrefix)
+      cr = new ClassResolver(@_options.classPrefix)
+      tr = @_options.typeResolver
       if parentId?
-        @find(parentId).addChild(new Node(structure, cr))
+        @find(parentId).addChild(new Node(structure, cr, tr))
       else
         if !(@rootNodes?)
           @_setRootContainer(new NodeContainer())
-        @rootNodes.add(new Node(structure, cr))
+        @rootNodes.add(new Node(structure, cr, tr))
+      this
+
+    update: (structure) ->
+      nodeId = structure.id
+      if !nodeId?
+        throw new Error('Cannot update without provided ID')
+      node = @find(nodeId)
+      if node
+        node.update(structure)
       this
 
     remove: (nodeId) ->
@@ -212,19 +240,20 @@ glyphtree = (element, options) ->
 
     class Node
 
-      constructor: (struct, classResolver) ->
-        @cr = classResolver
+      constructor: (struct, classResolver, typeResolver) ->
+        @_cr = classResolver
+        @_tr = typeResolver
         @id = struct.id
         @name = struct.name
-        @type = struct.type
+        @type = @_tr(struct)
         @attributes = struct.attributes
         children = if struct.children
-          (new Node(child, classResolver) for child in struct.children)
+          (new Node(child, @_cr, @_tr) for child in struct.children)
         else
           []
         @children = new NodeContainer(children, classResolver)
         # Decorate with show/hide node expansion methods.
-        expandedClass = @cr.state('expanded')
+        expandedClass = @_cr.state('expanded')
         @isExpanded = () -> @element().hasClass(expandedClass)
         @expand     = () -> @element().addClass(expandedClass)
         @collapse   = () -> @element().removeClass(expandedClass)
@@ -234,6 +263,15 @@ glyphtree = (element, options) ->
         @children.add(node)
         if wasLeaf
           @element().append(@children.element())
+
+      update: (struct) ->
+        @id = struct.id
+        @name = struct.name
+        formerType = @type
+        @type = @_tr(struct)
+        @attributes = struct.attributes
+        @_rebuildElement(formerType)
+        this
 
       remove: () ->
         @container.remove(this)
@@ -246,25 +284,36 @@ glyphtree = (element, options) ->
 
       _buildElement: () ->
         $li = $('<li/>')
-          .addClass(@cr.node())
-          .addClass(@cr.type(@type ? 'default'))
+          .addClass(@_cr.node())
+          .addClass(@_cr.type(@type))
         $label = $('<span/>')
-          .addClass(@cr.node('label'))
+          .addClass(@_cr.node('label'))
           .text(@name)
         $li.append($label)
         if @isLeaf()
-          $li.addClass(@cr.state('leaf'))
+          $li.addClass(@_cr.state('leaf'))
         else
           $li.append(@children.element())
         @_attachEvents($li, 'icon')
         @_attachEvents($label, 'label')
         $li
 
-      toggleExpansion = (event, node) ->
-        if node.isExpanded()
-          node.collapse()
+      _rebuildElement: (formerType) ->
+        if @_element?
+          if (formerType != @type)
+            @_element.removeClass(@_cr.type(formerType))
+            @_element.addClass(@_cr.type(@type))
+          $label = @_element.children('.'+@_cr.node('label'))
+          $label.text(@name)
         else
-          node.expand()
+          @element()
+
+      toggleExpansion = (event, node) ->
+        if !node.isLeaf()
+          if node.isExpanded()
+            node.collapse()
+          else
+            node.expand()
 
       events:
         icon:
@@ -292,7 +341,7 @@ glyphtree = (element, options) ->
 
     class NodeContainer
 
-      constructor: (@nodes, @cr) ->
+      constructor: (@nodes, @_cr) ->
         for node in @nodes
           node.container = this
 
@@ -314,7 +363,7 @@ glyphtree = (element, options) ->
 
       _buildElement: () ->
         $list = $("<ul/>")
-        $list.addClass(@cr.tree())
+        $list.addClass(@_cr.tree())
         $list.append(node.element() for node in @nodes)
         $list
 
@@ -347,8 +396,43 @@ glyphtree = (element, options) ->
           @prefix + "node"
 
       tree: () -> @prefix + "tree"
-      type: (type) -> @prefix + 'type-' + type
+      type: (type) -> @prefix + 'type-' + (type ? 'default')
       state: (state) -> @prefix + state
 
   # Return new GlyphTree
   new GlyphTree(element, options)
+
+# ## Window binding
+#
+# GlyphTree is designed to be tested by Node.js, so it handles injection of
+# a window into its environment.
+bindToWindow = (window) ->
+  options = defaults()
+  # Options are deep-merged together
+  deepMerge = (obj, defaults) ->
+    h = {}
+    for k, v of defaults
+      h[k] = v
+    for k, v of obj
+      if typeof(h[k]) == 'object'
+        h[k] = deepMerge(v, h[k])
+      else
+        h[k] = v
+    h
+  # Bind function to the window context
+  window.glyphtree = (element, opts) ->
+    glyphtree.call(window, element, deepMerge(opts ? {}, options))
+  # Expose options so they can be changed
+  window.glyphtree.options = options
+  # Return bound function
+  window.glyphtree
+
+if exports?
+  # Node.js-only method for binding
+  exports.create = (windowToInit) ->
+    bindToWindow(windowToInit)
+else
+  # Bind to the window in the browser environment
+  bindToWindow(this)
+
+
