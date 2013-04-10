@@ -69,11 +69,11 @@
                   icon: {
                     "default": {
                       content: "\uf07b",
-                      font: "FontAwesome"
+                      'font-family': "FontAwesome"
                     },
                     expanded: {
                       content: "\uf07c",
-                      font: "FontAwesome"
+                      'font-family': "FontAwesome"
                     }
                   }
                 },
@@ -81,7 +81,7 @@
                   icon: {
                     leaf: {
                       content: "\uf016",
-                      font: "FontAwesome"
+                      'font-family': "FontAwesome"
                     }
                   }
                 }
@@ -117,9 +117,12 @@
         });
         </script>
         <div id="type-resolve-example" class="offset1 span3">
-          <div class="btn-group pull-right">
-            <button class="btn btn-mini">Expand</button>
-            <button class="btn btn-mini">Collapse</button>
+          <div class="pull-right">
+            <div class="btn-group">
+              <button class="btn btn-mini">Expand</button>
+              <button class="btn btn-mini">Collapse</button>
+            </div>
+            <div id="mime-display"></div>
           </div>
           <div id="glyphtree-example-3">
             <p>Content which will be removed.</p>
@@ -141,6 +144,8 @@
                   if (mime.match(/^image/)) {
                     return 'image';
                   } else if (mime.match(/^text/)){
+                    if (mime == 'text/csv')
+                      return 'csv';
                     return 'text';
                   }
                 }
@@ -151,11 +156,11 @@
                   icon: {
                     "default": {
                       content: "\uf07b",
-                      font: "FontAwesome"
+                      'font-family': "FontAwesome"
                     },
                     expanded: {
                       content: "\uf07c",
-                      font: "FontAwesome"
+                      'font-family': "FontAwesome",
                     }
                   }
                 },
@@ -163,7 +168,7 @@
                   icon: {
                     leaf: {
                       content: "\uf016",
-                      font: "FontAwesome"
+                      'font-family': "FontAwesome"
                     }
                   }
                 },
@@ -171,7 +176,16 @@
                   icon: {
                     leaf: {
                       content: "\uf03e",
-                      font: "FontAwesome"
+                      'font-family': "FontAwesome",
+                    }
+                  }
+                },
+                csv: {
+                  icon: {
+                    leaf: {
+                      content: "\uf0ce",
+                      'font-family': "FontAwesome",
+                      'color': '#339933'
                     }
                   }
                 },
@@ -179,7 +193,7 @@
                   icon: {
                     leaf: {
                       content: "\uf0f6",
-                      font: "FontAwesome"
+                      'font-family': "FontAwesome"
                     }
                   }
                 }
@@ -201,6 +215,10 @@
                       attributes: { mime: 'image/png' }
                     },
                     {
+                      name: "foobar.csv",
+                      attributes: { mime: 'text/csv' }
+                    },
+                    {
                       name: "foobar.zip",
                       attributes: { mime: 'application/zip' }
                     }
@@ -209,6 +227,19 @@
               ]
             }
           ]);
+          mimeHandler = function (event, node) {
+            if (node.isLeaf()) {
+              if (event.type == 'mouseover' && node.attributes) {
+                $("#mime-display").text(node.attributes.mime);
+              } else {
+                $("#mime-display").text('');
+              }
+            }
+          };
+          typeResolverTree.events.icon.mouseover =
+            typeResolverTree.events.icon.mouseout =
+            typeResolverTree.events.label.mouseover =
+            typeResolverTree.events.label.mouseout = [mimeHandler];
           $('#type-resolve-example .btn:contains(Expand)').click(function() {
             typeResolverTree.expandAll();
           });

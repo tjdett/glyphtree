@@ -16,6 +16,13 @@
 # It is built with Twitter Bootstrap in mind, but should work with almost any
 # sensible stylesheet.
 
+toggleExpansionHandler = (event, node) ->
+  if !node.isLeaf()
+    if node.isExpanded()
+      node.collapse()
+    else
+      node.expand()
+
 # ## Defaults
 #
 # GlyphTree allows you to be fairly flexibile about CSS it generates, and how
@@ -27,19 +34,22 @@ defaults = () ->
   classPrefix: "glyphtree-"
   # * create the tree already expanded;
   startExpanded: false
+  # * specify event handlers for node interactions;
+  events:
+    icon:
+      click: [ toggleExpansionHandler ]
+    label:
+      click: [ toggleExpansionHandler ]
   # * specify custom types for nodes, and their styling;
   types:
     default:
       icon:
         default:
-          content: "\u25b6"
-          font: "inherit"
+          content: "\u25b6" # Right triangle
         leaf:
-          content: "\u2022"
-          font: "inherit"
+          content: "\u2022" # Bullet
         expanded:
-          content: "\u25bc"
-          font: "inherit"
+          content: "\u25bc" # Down triangle
   # * specify your own function to determine what type a node is, allowing you
   #   to determine types client-side.
   typeResolver: (struct) ->
@@ -80,8 +90,15 @@ glyphtree = (element, options) ->
       # * adds an ID class so styles can address this tree only
       @idClass = @_options.classPrefix+'id'+randomId
       $(@element).addClass(@idClass)
+      # * creates helper functions for `Node` & `NodeContainer`
+      @classResolver = new ClassResolver(@_options.classPrefix)
+      @resolveType = @_options.typeResolver
       # * adds the generated stylesheet to the DOM
       @_styleElement = this.setupStyle()
+      # * populates event handlers
+      @events = @_options.events
+      # * sets the default expansion state
+      @startExpanded = @_options.startExpanded
 
     setupStyle: () ->
       $style = $('<style/>')
@@ -91,7 +108,12 @@ glyphtree = (element, options) ->
       $style
 
     getStyle: () ->
-      cr = new ClassResolver(@_options.classPrefix)
+      cr = @classResolver
+      styleExpr = (property, value) ->
+        if value.match(/^(#|rgb|\d)/)
+          "#{property}: #{value};"
+        else
+          "#{property}: \"#{value}\";"
       # Produce style rules for each type
       typeStyle = (name, config) =>
         # Make the default state being the absence of a state class.
@@ -105,12 +127,9 @@ glyphtree = (element, options) ->
         # Setup icons for each of the states.
         # Any missing will have the default state icon.
         (for state in ['default', 'leaf', 'expanded'] when config.icon[state]
-          """
-          .#{@idClass} ul li.#{cr.node()}#{sel(state, name)}:before {
-            font-family: #{config.icon[state].font};
-            content: '#{config.icon[state].content}';
-          }
-          """).join("\n") +
+          ".#{@idClass} ul li.#{cr.node()}#{sel(state, name)}:before {" +
+          (styleExpr(k, v) for k, v of config.icon[state]).join(" ") +
+          "}").join("\n")+"\n" +
         # Hide children except when expanded
         """
         .#{@idClass} ul li.#{cr.node()}#{sel('default',name)} > ul.#{cr.tree()} {
@@ -159,13 +178,9 @@ glyphtree = (element, options) ->
     #
     #  IDs, attributes and type are optional.
     load: (structure) ->
-      cr = new ClassResolver(@_options.classPrefix)
-      tr = @_options.typeResolver
       @_setRootContainer(
-        new NodeContainer(new Node(root, cr, tr) for root in structure, cr)
+        new NodeContainer(new Node(root, this) for root in structure, this)
       )
-      if @_options.startExpanded
-        @expandAll()
       this
 
     # Takes a plain object structure for a node, like:
@@ -179,14 +194,12 @@ glyphtree = (element, options) ->
     #     }
     #
     add: (structure, parentId) ->
-      cr = new ClassResolver(@_options.classPrefix)
-      tr = @_options.typeResolver
       if parentId?
-        @find(parentId).addChild(new Node(structure, cr, tr))
+        @find(parentId).addChild(new Node(structure, this))
       else
         if !(@rootNodes?)
-          @_setRootContainer(new NodeContainer())
-        @rootNodes.add(new Node(structure, cr, tr))
+          @_setRootContainer(new NodeContainer([], this))
+        @rootNodes.add(new Node(structure, this))
       this
 
     update: (structure) ->
@@ -240,18 +253,17 @@ glyphtree = (element, options) ->
 
     class Node
 
-      constructor: (struct, classResolver, typeResolver) ->
-        @_cr = classResolver
-        @_tr = typeResolver
+      constructor: (struct, @tree) ->
+        @_cr = @tree.classResolver
         @id = struct.id
         @name = struct.name
-        @type = @_tr(struct)
+        @type = @tree.resolveType(struct)
         @attributes = struct.attributes
         children = if struct.children
-          (new Node(child, @_cr, @_tr) for child in struct.children)
+          (new Node(child, @tree) for child in struct.children)
         else
           []
-        @children = new NodeContainer(children, classResolver)
+        @children = new NodeContainer(children, @tree)
         # Decorate with show/hide node expansion methods.
         expandedClass = @_cr.state('expanded')
         @isExpanded = () -> @element().hasClass(expandedClass)
@@ -268,7 +280,7 @@ glyphtree = (element, options) ->
         @id = struct.id
         @name = struct.name
         formerType = @type
-        @type = @_tr(struct)
+        @type = @tree.resolveType(struct)
         @attributes = struct.attributes
         @_rebuildElement(formerType)
         this
@@ -294,6 +306,8 @@ glyphtree = (element, options) ->
           $li.addClass(@_cr.state('leaf'))
         else
           $li.append(@children.element())
+        if @tree.startExpanded
+          $li.addClass(@_cr.state('expanded'))
         @_attachEvents($li, 'icon')
         @_attachEvents($label, 'label')
         $li
@@ -308,19 +322,6 @@ glyphtree = (element, options) ->
         else
           @element()
 
-      toggleExpansion = (event, node) ->
-        if !node.isLeaf()
-          if node.isExpanded()
-            node.collapse()
-          else
-            node.expand()
-
-      events:
-        icon:
-          click: [ toggleExpansion ]
-        label:
-          click: [ toggleExpansion ]
-
       _attachEvents: ($element,  eventMapKey) ->
         watchedEvents = """
           click
@@ -332,16 +333,17 @@ glyphtree = (element, options) ->
         """.replace(/\s+/gm, ' ').trim()
         # Register a generic event handler pointing back to the events map
         $element.on watchedEvents, (e) =>
-          if @events[eventMapKey][e.type]?
+          if @tree.events[eventMapKey][e.type]?
             # Prevent bubbling
             if e.currentTarget == e.target
-              for handler in @events[eventMapKey][e.type]
+              for handler in @tree.events[eventMapKey][e.type]
                 # Call handler with (original event, node)
                 handler(e, this)
 
     class NodeContainer
 
-      constructor: (@nodes, @_cr) ->
+      constructor: (@nodes, tree) ->
+        @_cr = tree.classResolver
         for node in @nodes
           node.container = this
 
