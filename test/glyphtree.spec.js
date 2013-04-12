@@ -188,6 +188,23 @@ describe('GlyphTree', function() {
             +nodeName+')').length).to.equal(0);
       }, done);
     });
+    it('should remove nodes previously added', function(done) {
+      withTestTree(testTreeStructure)(function(tree, $) {
+        var testNode = {
+          id: 'newly-added-node',
+          name: 'Foo Bar'
+        };  
+        tree.add({
+          id: 'newly-added-node',
+          name: 'Foo Bar'
+        });
+        expect($('.glyphtree-node > .glyphtree-node-label:contains('
+            +testNode.name+')').length).to.equal(1);
+        tree.remove(testNode.id);
+        expect($('.glyphtree-node > .glyphtree-node-label:contains('
+            +testNode.name+')').length).to.equal(0);
+      }, done);
+    });
   });
 
 

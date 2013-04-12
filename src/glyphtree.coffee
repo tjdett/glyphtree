@@ -351,6 +351,7 @@ glyphtree = (element, options) ->
 
       add: (node) ->
         @nodes.push(node)
+        node.container = this
         @_rebuildElement()
 
       remove: (node) ->
