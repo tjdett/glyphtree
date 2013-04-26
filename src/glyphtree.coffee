@@ -195,7 +195,10 @@ glyphtree = (element, options) ->
     #
     add: (structure, parentId) ->
       if parentId?
-        @find(parentId).addChild(new Node(structure, this))
+        parent = @find(parentId)
+        if not parent?
+          throw new Error('Cannot add node - unknown parent node ID')
+        parent.addChild(new Node(structure, this))
       else
         if !(@rootNodes?)
           @_setRootContainer(new NodeContainer([], this))
