@@ -101,9 +101,8 @@ glyphtree = (element, options) ->
       @startExpanded = @_options.startExpanded
 
     setupStyle: () ->
-      $style = $('<style/>')
-      $style.attr('type', 'text/css')
-      $style.text(this.getStyle())
+      # Using "$style.text()" doesn't work for IE8, so... 
+      $style = $('<style type="text/css">'+this.getStyle()+'</style>')
       $('body').append($style)
       $style
 
@@ -326,14 +325,14 @@ glyphtree = (element, options) ->
           @element()
 
       _attachEvents: ($element,  eventMapKey) ->
-        watchedEvents = """
-          click
-          keydown
-          keypress
-          keyup
-          mouseover
-          mouseout
-        """.replace(/\s+/gm, ' ').trim()
+        watchedEvents = [
+          'click',
+          'keydown',
+          'keypress',
+          'keyup',
+          'mouseover',
+          'mouseout'
+        ].join(' ');
         # Register a generic event handler pointing back to the events map
         $element.on watchedEvents, (e) =>
           if @tree.events[eventMapKey][e.type]?
