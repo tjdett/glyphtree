@@ -299,7 +299,8 @@ describe('GlyphTree', function() {
         withTestTree(testTreeStructure)(function (tree, $) {
           var $e =
             $([ '#test', '.glyphtree-tree',
-                '.glyphtree-node:not(.glyphtree-leaf)'
+                '.glyphtree-node:not(.glyphtree-leaf)',
+                '.glyphtree-node-icon'
               ].join(' > ')).first()
           // Tree starts unexpanded
           expect($('.glyphtree-expanded').length).to.equal(0);
@@ -316,8 +317,11 @@ describe('GlyphTree', function() {
 
       it ("should not toggle leaf nodes", function(done) {
         withTestTree(testTreeStructure)(function (tree, $) {
-          var $e = $('#test .glyphtree-tree .glyphtree-node.glyphtree-leaf')
-            .first();
+          var $e =
+            $([ '#test .glyphtree-tree', // Subtree containing leaves
+              '.glyphtree-node.glyphtree-leaf',
+              '.glyphtree-node-icon'
+            ].join(' > ')).first();
           expect($e.length).to.equal(1);
           // Tree starts unexpanded
           expect($e.hasClass('glyphtree-expanded')).to.be.false;

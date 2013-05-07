@@ -126,7 +126,7 @@ glyphtree = (element, options) ->
         # Setup icons for each of the states.
         # Any missing will have the default state icon.
         (for state in ['default', 'leaf', 'expanded'] when config.icon[state]
-          ".#{@idClass} ul li.#{cr.node()}#{sel(state, name)}:before {" +
+          ".#{@idClass} ul li.#{cr.node()}#{sel(state, name)} > span.#{cr.node('icon')}:after {" +
           (styleExpr(k, v) for k, v of config.icon[state]).join(" ") +
           "}").join("\n")+"\n" +
         # Hide children except when expanded
@@ -146,7 +146,7 @@ glyphtree = (element, options) ->
       .#{@idClass} ul li.#{cr.node()} {
         cursor: pointer;
       }
-      .#{@idClass} ul li.#{cr.node()}:before {
+      .#{@idClass} ul li.#{cr.node()} > span.#{cr.node('icon')}:after {
         width: 1em;
         text-align: center;
         display: inline-block;
@@ -300,9 +300,12 @@ glyphtree = (element, options) ->
         $li = $('<li/>')
           .addClass(@_cr.node())
           .addClass(@_cr.type(@type))
+        $icon = $('<span/>')
+          .addClass(@_cr.node('icon'))
         $label = $('<span/>')
           .addClass(@_cr.node('label'))
           .text(@name)
+        $li.append($icon)
         $li.append($label)
         if @isLeaf()
           $li.addClass(@_cr.state('leaf'))
@@ -310,7 +313,7 @@ glyphtree = (element, options) ->
           $li.append(@children.element())
         if @tree.startExpanded
           $li.addClass(@_cr.state('expanded'))
-        @_attachEvents($li, 'icon')
+        @_attachEvents($icon, 'icon')
         @_attachEvents($label, 'label')
         $li
 
@@ -330,17 +333,15 @@ glyphtree = (element, options) ->
           'keydown',
           'keypress',
           'keyup',
-          'mouseover',
-          'mouseout'
+          'mouseenter',
+          'mouseleave'
         ].join(' ');
         # Register a generic event handler pointing back to the events map
         $element.on watchedEvents, (e) =>
           if @tree.events[eventMapKey][e.type]?
-            # Prevent bubbling
-            if e.currentTarget == e.target
-              for handler in @tree.events[eventMapKey][e.type]
-                # Call handler with (original event, node)
-                handler(e, this)
+            for handler in @tree.events[eventMapKey][e.type]
+              # Call handler with (original event, node)
+              handler(e, this)
 
     class NodeContainer
 
