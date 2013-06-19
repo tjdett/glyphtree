@@ -360,7 +360,7 @@ glyphtree = (element, options) ->
       remove: (node) ->
         if node in @nodes
           node.element().remove()
-          @nodes = @nodes.filter (n) -> n isnt node
+          @nodes = (n for n in @nodes when n isnt node)
         else
           throw new Error('Node not in this container')
 
