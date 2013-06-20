@@ -131,6 +131,32 @@ describe('GlyphTree', function() {
         }
       }, done);
     });
+    
+    it('should add nodes using natural ordering on name', function(done) {
+      function randomId() {
+        return (Math.random() * Math.pow(2,32))+"";
+      }
+      withTestTree({})(function(tree, $) {
+        // No nodes initially
+        expect($('.glyphtree-node').length).to.equal(0);
+        for (var i = 9; i > 0; i--) {
+          var nodeName = "root node "+i;
+          // Add a node
+          tree.add({
+            id: randomId(),
+            name: nodeName
+          });
+        }
+        var names = [];
+        $.each(tree.nodes(), function(i, v) {
+          names.push(v.name);
+        });
+        var sortedNames = names.concat().sort();
+        $.each(names, function(i, v) {
+          expect(v).to.equal(sortedNames[i]);
+        });
+      }, done);
+    });
 
   });
 

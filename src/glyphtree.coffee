@@ -353,7 +353,14 @@ glyphtree = (element, options) ->
       empty: () -> @nodes.length == 0
 
       add: (node) ->
-        @nodes.push(node)
+        # Calculates where to insert this node in the container
+        splicePoint = (nodes) ->
+          for n, i in nodes
+            if n.name > node.name
+              return i;
+          nodes.length
+        # Splice the node into the right point in the array
+        @nodes.splice(splicePoint(@nodes), 0, node)
         node.container = this
         @_rebuildElement()
 
