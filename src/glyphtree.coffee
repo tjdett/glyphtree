@@ -304,6 +304,7 @@ glyphtree = (element, options) ->
           .addClass(@_cr.node('icon'))
         $label = $('<span/>')
           .addClass(@_cr.node('label'))
+          .attr('tabindex', -1) # Allow focusing on label
           .text(@name)
         $li.append($icon)
         $li.append($label)
