@@ -99,9 +99,11 @@ glyphtree = (element, options) ->
       @events = @_options.events
       # * sets the default expansion state
       @startExpanded = @_options.startExpanded
+      # * creates an empty root container
+      @_setRootContainer(new NodeContainer([], this))
 
     setupStyle: () ->
-      # Using "$style.text()" doesn't work for IE8, so... 
+      # Using "$style.text()" doesn't work for IE8, so...
       $style = $('<style type="text/css">'+this.getStyle()+'</style>')
       $('body').append($style)
       $style
@@ -199,8 +201,6 @@ glyphtree = (element, options) ->
           throw new Error('Cannot add node - unknown parent node ID')
         parent.addChild(new Node(structure, this))
       else
-        if !(@rootNodes?)
-          @_setRootContainer(new NodeContainer([], this))
         @rootNodes.add(new Node(structure, this))
       this
 

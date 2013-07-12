@@ -131,7 +131,7 @@ describe('GlyphTree', function() {
         }
       }, done);
     });
-    
+
     it('should add nodes using natural ordering on name', function(done) {
       function randomId() {
         return (Math.random() * Math.pow(2,32))+"";
@@ -219,7 +219,7 @@ describe('GlyphTree', function() {
         var testNode = {
           id: 'newly-added-node',
           name: 'Foo Bar'
-        };  
+        };
         tree.add({
           id: 'newly-added-node',
           name: 'Foo Bar'
@@ -315,6 +315,14 @@ describe('GlyphTree', function() {
       }, done);
     });
 
+    it ("should be safe to perform before tree load", function(done){
+      withTestTree(null)(function (tree, $) {
+        var nodeCount = 0;
+        tree.walk(function(node) { nodeCount++ });
+        expect(nodeCount).to.equal(0);
+      }, done);
+    });
+
   });
 
   describe("default user events", function() {
@@ -377,7 +385,9 @@ describe('GlyphTree', function() {
             $ = jqueryFactory.create(window),
             glyphtree = glyphtreeFactory.create(window);
           var tree = glyphtree($('#test'), options);
-          tree.load(structure);
+          if (structure != null) {
+            tree.load(structure);
+          }
           jqueryTestFunc(tree, $);
           callback();
         }
