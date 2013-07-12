@@ -249,8 +249,7 @@ glyphtree = (element, options) ->
 
     _setRootContainer: (container) ->
       @rootNodes = container
-      $(@element).empty()
-      $(@element).append(container.element())
+      $(@element).html(container.element())
       this
 
     class Node
