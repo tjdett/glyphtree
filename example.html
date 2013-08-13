@@ -64,6 +64,24 @@
             document.getElementById("glyphtree-example-2"),
             {
               startExpanded: true,
+              nodeComparator: function(a, b) {
+                var knownTypes = ['folder', 'file'];
+                var typeIndexA = $.inArray(a.type, knownTypes);
+                var typeIndexB = $.inArray(b.type, knownTypes);
+                if (typeIndexA == typeIndexB) {
+                  if (a.name < b.name)
+                    return -1;
+                  else if (a.name > b.name)
+                    return 1;
+                  else
+                    return 0;
+                } else {
+                  if (typeIndexA < typeIndexB)
+                    return -1;
+                  else
+                    return 1;
+                }
+              },
               types: {
                 folder: {
                   icon: {
@@ -95,6 +113,10 @@
                 exampleAttr: "foobar"
               },
               children: [
+                {
+                  name: "README.txt",
+                  type: "file"
+                },
                 {
                   name: "subfolder",
                   type: "folder",

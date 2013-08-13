@@ -54,6 +54,13 @@ defaults = () ->
   #   to determine types client-side.
   typeResolver: (struct) ->
     struct.type
+  # * specify your own function to determine the natural order of nodes, so
+  #   you can sort based on your own criteria. (default: sort by name)
+  nodeComparator: (nodeA, nodeB) ->
+    switch
+      when nodeA.name < nodeB.name then -1
+      when nodeA.name > nodeB.name then 1
+      else 0
 
 # ## Producing a new GlyphTree
 #
@@ -92,6 +99,7 @@ glyphtree = (element, options) ->
       $(@element).addClass(@idClass)
       # * creates helper functions for `Node` & `NodeContainer`
       @classResolver = new ClassResolver(@_options.classPrefix)
+      @compareNodes = @_options.nodeComparator
       @resolveType = @_options.typeResolver
       # * adds the generated stylesheet to the DOM
       @_styleElement = this.setupStyle()
@@ -283,6 +291,7 @@ glyphtree = (element, options) ->
         formerType = @type
         @type = @tree.resolveType(struct)
         @attributes = struct.attributes
+        @container.sort()
         @_rebuildElement(formerType)
         this
 
@@ -347,21 +356,18 @@ glyphtree = (element, options) ->
 
       constructor: (@nodes, tree) ->
         @_cr = tree.classResolver
+        @_compareNodes = (a, b) ->
+          tree.compareNodes(a, b)
         for node in @nodes
           node.container = this
+        @sort()
 
       empty: () -> @nodes.length == 0
 
       add: (node) ->
-        # Calculates where to insert this node in the container
-        splicePoint = (nodes) ->
-          for n, i in nodes
-            if n.name > node.name
-              return i;
-          nodes.length
-        # Splice the node into the right point in the array
-        @nodes.splice(splicePoint(@nodes), 0, node)
+        @nodes.push(node)
         node.container = this
+        @sort()
         @_rebuildElement()
 
       remove: (node) ->
@@ -387,6 +393,10 @@ glyphtree = (element, options) ->
           @_element.append(node.element() for node in @nodes)
         else
           @element()
+
+      # Sort nodes using comparator
+      sort: () ->
+        @nodes.sort(@_compareNodes)
 
       # Walk all nodes in the tree.
       #
