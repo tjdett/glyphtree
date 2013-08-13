@@ -291,7 +291,7 @@ glyphtree = (element, options) ->
         formerType = @type
         @type = @tree.resolveType(struct)
         @attributes = struct.attributes
-        @container.sort()
+        @container.refresh()
         @_rebuildElement(formerType)
         this
 
@@ -360,15 +360,14 @@ glyphtree = (element, options) ->
           tree.compareNodes(a, b)
         for node in @nodes
           node.container = this
-        @sort()
+        @_sort()
 
       empty: () -> @nodes.length == 0
 
       add: (node) ->
         @nodes.push(node)
         node.container = this
-        @sort()
-        @_rebuildElement()
+        @refresh()
 
       remove: (node) ->
         if node in @nodes
@@ -377,6 +376,10 @@ glyphtree = (element, options) ->
         else
           throw new Error('Node not in this container')
 
+      refresh: () ->
+        @_sort()
+        @_rebuildElement()
+          
       element: () ->
         @_element ||= @_buildElement()
 
@@ -395,7 +398,7 @@ glyphtree = (element, options) ->
           @element()
 
       # Sort nodes using comparator
-      sort: () ->
+      _sort: () ->
         @nodes.sort(@_compareNodes)
 
       # Walk all nodes in the tree.
