@@ -108,7 +108,7 @@ glyphtree = (element, options) ->
       # * sets the default expansion state
       @startExpanded = @_options.startExpanded
       # * creates an empty root container
-      @_setRootContainer(new NodeContainer([], this))
+      @_setRootContainer(new NodeContainer([], this, null))
 
     setupStyle: () ->
       # Using "$style.text()" doesn't work for IE8, so...
@@ -188,8 +188,10 @@ glyphtree = (element, options) ->
     #  IDs, attributes and type are optional.
     load: (structure) ->
       @_setRootContainer(
-        new NodeContainer(new Node(root, this) for root in structure, this)
-      )
+        new NodeContainer(
+          new Node(root, this) for root in structure, 
+          this, 
+          null))
       this
 
     # Takes a plain object structure for a node, like:
@@ -272,13 +274,16 @@ glyphtree = (element, options) ->
           (new Node(child, @tree) for child in struct.children)
         else
           []
-        @children = new NodeContainer(children, @tree)
+        @children = new NodeContainer(children, @tree, this)
         # Decorate with show/hide node expansion methods.
         expandedClass = @_cr.state('expanded')
         @isExpanded = () -> @element().hasClass(expandedClass)
         @expand     = () -> @element().addClass(expandedClass)
         @collapse   = () -> @element().removeClass(expandedClass)
 
+      parent: () ->
+        @container.parentNode
+        
       addChild: (node) ->
         wasLeaf = @isLeaf()
         @children.add(node)
@@ -354,7 +359,7 @@ glyphtree = (element, options) ->
 
     class NodeContainer
 
-      constructor: (@nodes, tree) ->
+      constructor: (@nodes, tree, @parentNode) ->
         @_cr = tree.classResolver
         @_compareNodes = (a, b) ->
           tree.compareNodes(a, b)

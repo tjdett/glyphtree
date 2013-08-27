@@ -267,6 +267,9 @@ describe('GlyphTree', function() {
         expect(nodes[1].name).to.equal('subfolder');
         expect(nodes[2].name).to.equal('README');
         expect(nodes[3].name).to.equal('file.txt');
+        expect(nodes[1].parent()).to.equal(nodes[0]);
+        expect(nodes[2].parent()).to.equal(nodes[1]);
+        expect(nodes[3].parent()).to.equal(nodes[1]);
       }, done);
     });
   });
