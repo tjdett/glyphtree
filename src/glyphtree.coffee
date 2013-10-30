@@ -2,6 +2,7 @@
 #     Copyright (c) 2013 The University of Queensland
 #     MIT Licence - see COPYING for details.
 ###
+"use strict"
 
 # # GlyphTree.js
 #
